@@ -25,10 +25,10 @@ def get_admins(chat_id):
 
 def check_player_count(chat_id, data):
     if len(data["chat_id"][chat_id]["players"]) < MIN_USER_IN_GAME:
-        bot.send_message(chat_id, f"⚙️| Для начала игры требуется минимум {MIN_USER_IN_GAME} игроков.")
+        bot.send_message(chat_id, f"⚙️| Для начала игры требуется минимум {MIN_USER_IN_GAME} людей.")
         return False
     elif len(data["chat_id"][chat_id]["players"]) > MAX_USER_IN_GAME:
-        bot.send_message(chat_id, f"⚙️| Максимальное количество игроков - {MAX_USER_IN_GAME}.")
+        bot.send_message(chat_id, f"⚙️| Максимальное количество людей - {MAX_USER_IN_GAME}.")
         return False
     return True
 
@@ -38,12 +38,12 @@ def start_new_game(chat_id):
     data["chat_id"][chat_id]["game_in_progress"] = True
     assign_roles(chat_id, data)
     for player_id, role in data["chat_id"][chat_id]["players"].items():
-        if role["roles"] == "Мафия" and len(data["chat_id"][chat_id]["mafia"]) > 1:
+        if role["roles"] == "Яндэре" and len(data["chat_id"][chat_id]["mafia"]) > 1:
             bot.send_message(player_id,
-                             f'Ваша роль: {role["roles"]}\n\n Состав мафии:\n{data["chat_id"][chat_id]["mafia"][0]}\n{data["chat_id"][chat_id]["mafia"][1]}')
+                             f'Твоя роль: {role["roles"]}\n\n Состав Яндэре:\n{data["chat_id"][chat_id]["mafia"][0]}\n{data["chat_id"][chat_id]["mafia"][1]}')
         else:
             bot.send_message(player_id, f'Ваша 🎭: {role["roles"]}')
-    bot.send_message(chat_id, "🌃| Игра началась! Ночь начинается.")
+    bot.send_message(chat_id, "🌃| Яндэре разозлилась! Яндэре вышла на охоту.")
     table_chat.save_json_file_and_write(data)
     start_night_phase(chat_id)
 
@@ -54,28 +54,28 @@ def assign_roles(chat_id, data):  # JSON DATABASE
     num_players = len(player_ids)
 
     if num_players >= 5:
-        data["chat_id"][chat_id]["players"][player_ids[0]]["roles"] = 'Мафия'
+        data["chat_id"][chat_id]["players"][player_ids[0]]["roles"] = 'Яндэре'
         data["chat_id"][chat_id]["mafia"].append(player_ids[0])
-        data["chat_id"][chat_id]["players"][player_ids[1]]["roles"] = 'Комиссар'
-        data["chat_id"][chat_id]["players"][player_ids[2]]["roles"] = 'Доктор'
+        data["chat_id"][chat_id]["players"][player_ids[1]]["roles"] = 'Журналист'
+        data["chat_id"][chat_id]["players"][player_ids[2]]["roles"] = 'Защитник'
         for i in range(3, num_players):
-            data["chat_id"][chat_id]["players"][player_ids[i]]["roles"] = 'Мирный житель'
+            data["chat_id"][chat_id]["players"][player_ids[i]]["roles"] = 'Соперница'
     if num_players >= 6:
-        data["chat_id"][chat_id]["players"][player_ids[3]]["roles"] = 'Мафия'  # Подпись тиммейтов
+        data["chat_id"][chat_id]["players"][player_ids[3]]["roles"] = 'Яндэре'  # Подпись тиммейтов
         data["chat_id"][chat_id]["mafia"].append(player_ids[3])
     if num_players >= 7:
-        data["chat_id"][chat_id]["players"][player_ids[4]]["roles"] = 'Мирный житель'
+        data["chat_id"][chat_id]["players"][player_ids[4]]["roles"] = 'Соперница'
     if num_players == 8:
-        data["chat_id"][chat_id]["players"][player_ids[5]]["roles"] = 'Мирный житель'
+        data["chat_id"][chat_id]["players"][player_ids[5]]["roles"] = 'Соперница'
     table_chat.save_json_file_and_write(data)
 
 
 def start_night_phase(chat_id):
     data = table_chat.open_json_file_and_write()
-    data["chat_id"][chat_id]["night_actions"] = {'Мафия': None, 'Доктор': None, 'Комиссар': None}
+    data["chat_id"][chat_id]["night_actions"] = {'Яндэре': None, 'Защитник': None, 'Журналист': None}
     table_chat.save_json_file_and_write(data)
     bot.send_message(chat_id,
-                     "🌃| Мафия, Доктор и Комиссар, проверьте свои личные сообщения для выполнения действий.",
+                     "🌃| Яндэре, Защитник и Журналист, проверьте свои личные сообщения для выполнения действий.",
                      reply_markup=MARKUP_TG)
     for player_id in data["chat_id"][chat_id]["players"]:
         if player_id not in data["chat_id"][chat_id]["admins"]:
@@ -90,14 +90,14 @@ def start_night_phase(chat_id):
                     markup.add(
                         types.InlineKeyboardButton(text=target_name['name'],
                                                    callback_data=f'night_kill_{target_id}_{chat_id}'))
-            bot.send_message(player_id, "⚙️| Выберите цель для 🔪🩸:", reply_markup=markup)
+            bot.send_message(player_id, "⚙️| Выбери цель для 🔪🩸:", reply_markup=markup)
         elif role["roles"] == 'Доктор':
             markup = types.InlineKeyboardMarkup()
             for target_id, target_name in data["chat_id"][chat_id]["players"].items():
                 markup.add(
                     types.InlineKeyboardButton(text=target_name['name'],
                                                callback_data=f'night_save_{target_id}_{chat_id}'))
-            bot.send_message(player_id, "⚙️| Выберите цель для 💊:", reply_markup=markup)
+            bot.send_message(player_id, "⚙️| Выбери к кому пойдешь в гости!🤗:", reply_markup=markup)
         elif role["roles"] == 'Комиссар':
             markup = types.InlineKeyboardMarkup()
             for target_id, target_name in data["chat_id"][chat_id]["players"].items():
@@ -105,7 +105,7 @@ def start_night_phase(chat_id):
                     markup.add(
                         types.InlineKeyboardButton(text=target_name['name'],
                                                    callback_data=f'night_check_{target_id}_{chat_id}'))
-            bot.send_message(player_id, "⚙️| Выберите цель для 🔎:", reply_markup=markup)
+            bot.send_message(player_id, "⚙️| Выбери цель для слежки 🔎:", reply_markup=markup)
 
 
 def handle_night_action_callback(call):
@@ -116,11 +116,11 @@ def handle_night_action_callback(call):
     role = data["chat_id"][chat_id]["players"][player_id]["roles"]
 
     if role == 'Мафия' and action == 'kill':
-        data["chat_id"][chat_id]["night_actions"]['Мафия'] = target_id
+        data["chat_id"][chat_id]["night_actions"]['Яндэре'] = target_id
     elif role == 'Доктор' and action == 'save':
-        data["chat_id"][chat_id]["night_actions"]['Доктор'] = target_id
+        data["chat_id"][chat_id]["night_actions"]['Защитник'] = target_id
     elif role == 'Комиссар' and action == 'check':
-        data["chat_id"][chat_id]["night_actions"]['Комиссар'] = target_id
+        data["chat_id"][chat_id]["night_actions"]['Журналист'] = target_id
     bot.send_message(player_id, f"⚙️| Вы выбрали {data['chat_id'][chat_id]['players'][target_id]['name']}")
     table_chat.save_json_file_and_write(data)
 
@@ -160,7 +160,7 @@ def end_night_phase(chat_id):
 
 def start_day_phase(chat_id):
     data = table_chat.open_json_file_and_write()
-    bot.send_message(chat_id, "🏙️| День начался. Дается одна минута на переговоры.")
+    bot.send_message(chat_id, "🏙️| День начался.У вас есть минута чтобы обсудить кто Яндэре.")
     sleep(60)
     for player_id, player_info in data["chat_id"][chat_id]["players"].items():
         markup = types.InlineKeyboardMarkup()
@@ -181,7 +181,7 @@ def handle_vote(call):
     chat_id = call.data.split('_')[2]
     data["chat_id"][chat_id]["players"][voter_id]['last_active'] = time()
     data["chat_id"][chat_id]["votes"][voter_id] = target_id
-    bot.send_message(voter_id, f"📢| Вы проголосовали за {data['chat_id'][chat_id]['players'][target_id]['name']}")
+    bot.send_message(voter_id, f"📢| Ты проголосовал(а) за {data['chat_id'][chat_id]['players'][target_id]['name']}")
     table_chat.save_json_file_and_write(data)
 
     if len(data["chat_id"][chat_id]["votes"]) == len(data['chat_id'][chat_id]['players']):
@@ -223,16 +223,16 @@ def check_win_condition(chat_id):  # здесь тоже самое переде
     mafia_count = sum(1 for role in data["chat_id"][chat_id]["players"].values() if role["roles"] == 'Мафия')
     non_mafia_count = len(data["chat_id"][chat_id]["players"]) - mafia_count
     if mafia_count >= non_mafia_count:
-        bot.send_message(chat_id, "🔪🩸| Мафия победила!")
+        bot.send_message(chat_id, "🔪🩸| Яндэре победил(а)!")
         for player_id, role in data["chat_id"][chat_id]["players"].items():
-            if role["roles"] == "Мафия":
+            if role["roles"] == "Яндэре":
                 table_users.update_data(player_id, "win", 1)
         end_game(chat_id)
         return False
     elif mafia_count == LOSE_MAFIA:
-        bot.send_message(chat_id, "🙎‍♂️| Мирные жители победили!")
+        bot.send_message(chat_id, "🙎‍♂️| Яндэре посадили в тюрьму.Победа!")
         for player_id, role in data["chat_id"][chat_id]["players"].items():
-            if role["roles"] != "Мафия":
+            if role["roles"] != "Яндэре":
                 table_users.update_data(player_id, "win", 1)
         end_game(chat_id)
         return False
