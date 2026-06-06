@@ -66,7 +66,7 @@ def start_game(message):
                                 "admins": get_admins(chat_id)}
     table_chat.save_json_file_and_write(data)
     bot.send_message(chat_id,
-                     "⚙️| Игра 'Мафия' начинается!\n🔗| Все желающие присоединиться, напишите /join.\n🏁| Начать игру /begin")
+                     "⚙️| Игра 'вычисли Яндэре' начинается!\n🔗| Все желающие присоединиться, напишите /join.\n🏁| Начать игру /begin")
 
 
 @bot.message_handler(commands=['join'])
