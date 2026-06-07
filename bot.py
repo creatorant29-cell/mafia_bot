@@ -1,23 +1,46 @@
 import logging
 import telebot
 from time import time
+import os
+import threading
+from aiohttp import web
+import asyncio
+
+# Импорты из проекта
 from cfg.text_in_bot import *
 from game import (start_new_game, handle_night_action_callback,
                   handle_vote, check_player_count,
                   update_last_active, get_admins)
-from cfg.config import API_TOKEN, MAX_USER_IN_GAME, MARKUP_TG
+from cfg.config import MAX_USER_IN_GAME, MARKUP_TG
 from db.sqlite.repository import DataBase
 from db.sqlite.schema import TABLE_NAME_USERS, USERS_TABLE_CREATE
 from db.json.dynamic_database import Json
 
+# Фейковый сервер для прохождения проверки портов Hugging Face
+async def handle(request):
+    return web.Response(text="Мафия онлайн и готова к игре!")
+
+def run_fake_server():
+    app = web.Application()
+    app.router.add_get('/', handle)
+    web.run_app(app, host='0.0.0.0', port=7860)
+
+# Запуск веб-сервера в фоновом потоке
+threading.Thread(target=run_fake_server, daemon=True).start()
+
+# Инициализация баз данных
 table_chat = Json()
 table_users = DataBase(TABLE_NAME_USERS, USERS_TABLE_CREATE)
 table_users.create_table()
 
+# Безопасное получение токена из секретов Hugging Face
+API_TOKEN = os.getenv("BOT_TOKEN")
 bot = telebot.TeleBot(API_TOKEN)
 
+# Настройка логирования
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 
 @bot.message_handler(commands=['start'])
